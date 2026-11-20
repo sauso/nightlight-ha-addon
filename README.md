@@ -2,7 +2,7 @@
 
 Run [Nightlight](https://github.com/sauso/nightlight), a private, self-hosted baby monitor for the cameras you already own, as an app on Home Assistant OS. (Home Assistant used to call apps "add-ons"; this is the same thing.)
 
-> **Experimental.** This app has not yet been installed on a real Home Assistant system. Please [report what you find](https://github.com/sauso/nightlight-ha-addon/issues), whether it works or not.
+> **Experimental.** Please [report what you find](https://github.com/sauso/nightlight-ha-addon/issues), whether it works or not.
 >
 > **Important:** Nightlight is a convenience tool, **not a safety or medical device**. Streams and alerts can fail. It must never replace adult supervision or be relied on to detect a child in distress.
 

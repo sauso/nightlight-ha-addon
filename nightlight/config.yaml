@@ -25,7 +25,7 @@ arch:
 # Supervisor appends `version`. Nothing is built locally, so there is no Dockerfile in this folder.
 image: ghcr.io/sauso/nightlight
 
-# Not yet installed on a real Home Assistant system. Stays experimental until it has been.
+# Experimental: it stays so until it has run on more Home Assistant setups.
 stage: experimental
 
 # The image starts with its own init (tini, then /app/entrypoint.sh). Docker's init in front of it

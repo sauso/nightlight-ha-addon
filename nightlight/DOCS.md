@@ -2,7 +2,7 @@
 
 Nightlight is a private, self-hosted baby monitor for the cameras you already own: live video and audio, sleep tracking and optional alerts, without a subscription or a Nightlight-hosted video service. This app runs **Nightlight 0.49.0** on your Home Assistant machine.
 
-> **Experimental.** This app has not yet been tested on real Home Assistant hardware. Please [report what works and what doesn't](https://github.com/sauso/nightlight-ha-addon/issues).
+> **Experimental.** Please [report what works and what doesn't](https://github.com/sauso/nightlight-ha-addon/issues).
 >
 > **Important:** Nightlight is a convenience tool, **not a safety or medical device**. Streams and alerts can fail. It must never replace adult supervision or be relied on to detect a child in distress.
 
