@@ -1,0 +1,6 @@
+# LF everywhere: scripts/smoke.sh runs under /bin/sh on Linux, where a CRLF line ending breaks
+# it, and the YAML is read by the Supervisor on Linux too. The maintainer works on Windows, so
+# this keeps a checkout from turning them into CRLF.
+* text=auto eol=lf
+*.sh text eol=lf
+*.png binary

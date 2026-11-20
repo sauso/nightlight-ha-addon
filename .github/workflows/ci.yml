@@ -1,0 +1,47 @@
+# Checks every push and pull request:
+#   lint  - Home Assistant's app linter (schema, deprecated keys, keys that only repeat a default).
+#   smoke - boots the exact image tag config.yaml pins, the way the Supervisor starts it, and checks
+#           it survives a restart and a re-create with its data (scripts/smoke.sh says what it proves).
+# Read-only on purpose: nothing here publishes, so no job needs a token with write access, and a
+# pull request from a fork runs with the same rights as a push.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: App config lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Same pin as the Nightlight app repository's workflows.
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The repository was renamed from frenck/action-addon-linter; GitHub redirects the old name.
+      # Release "v2.22.0" was published (2026-11-06) under the tag v2.21.2, which is this commit.
+      - name: Lint the app config
+        uses: frenck/action-app-linter@d51677290aef26cdfc835271dd3c7343ce502809 # v2.21.2 (release v2.22.0)
+        with:
+          path: "./nightlight"
+
+  smoke:
+    name: Boot smoke test
+    runs-on: ubuntu-latest
+    # A first boot may take up to the image's 120 s health start period, and the test boots it three
+    # times (first boot, restart, re-create) after pulling an image of about 830 MB unpacked. A local
+    # run on 2026-11-21 took about a minute once the image was present.
+    timeout-minutes: 20
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Boot, restart and re-create the pinned image
+        run: sh scripts/smoke.sh nightlight/config.yaml

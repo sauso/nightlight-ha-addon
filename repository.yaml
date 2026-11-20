@@ -1,0 +1,7 @@
+# Read by the Home Assistant Supervisor when someone adds this repository's URL.
+# Only `name` is required; it is the heading Nightlight appears under in the app store.
+# https://contributors.home-assistant.io/apps/guides/repository/
+# The maintainer is the GitHub handle on purpose: this repository is public.
+name: Nightlight add-ons
+url: https://github.com/sauso/nightlight-ha-addon
+maintainer: sauso

@@ -1,0 +1,85 @@
+# Nightlight as a Home Assistant app (Home Assistant called apps "add-ons" until 2026).
+#
+# Every key below was checked against the Supervisor's configuration reference
+# (https://contributors.home-assistant.io/apps/reference/configuration/) and the Supervisor source
+# on 2026-11-21. Keys that would only repeat a Supervisor default are left out on purpose, because the
+# app linter in CI fails on them: boot (auto: starts with Home Assistant), startup (application) and
+# apparmor (true: with no apparmor.txt here, the Supervisor leaves Docker's default profile in place).
+#
+# Updating to a new Nightlight release: change `version` to the new image tag, add a CHANGELOG.md
+# entry, and check the tag exists on ghcr.io first. CI pulls exactly that tag and boots it.
+
+name: Nightlight
+# Quoted so YAML never reads a version such as 0.50 as a number. With `image` set, this is ALSO the
+# image tag the Supervisor pulls (ghcr.io/sauso/nightlight:0.49.0): there is no separate tag field.
+version: "0.49.0"
+slug: nightlight
+description: Private, self-hosted baby monitor for the cameras you already own
+url: https://github.com/sauso/nightlight
+arch:
+  - aarch64
+  - amd64
+
+# The same multi-architecture image every other install runs, pulled prebuilt from the GitHub
+# Container Registry (a digest-identical mirror of Docker Hub's sauso/nightlight). No tag here: the
+# Supervisor appends `version`. Nothing is built locally, so there is no Dockerfile in this folder.
+image: ghcr.io/sauso/nightlight
+
+# Not yet installed on a real Home Assistant system. Stays experimental until it has been.
+stage: experimental
+
+# The image starts with its own init (tini, then /app/entrypoint.sh). Docker's init in front of it
+# would be a second PID 1 wrapper for nothing.
+init: false
+
+# Seconds the Supervisor waits after SIGTERM before it kills the app. Its default is 10. Nightlight's
+# shutdown budget is 20 s, 23 s in the worst case (backend/src/index.js in the app repository, #867),
+# because an on-demand recording is assembled from the buffer on the way down and a kill part-way
+# through loses it. 30 matches the --stop-timeout 30 every other install method uses; the container
+# exits as soon as it has finished, so the extra time costs nothing.
+timeout: 30
+
+# Host networking, as in the app's own Docker quick start. Camera discovery, mDNS announcement
+# for the phone apps (UDP 5353) and low-latency WebRTC video (UDP 8189) all need the app on the
+# home network itself, not behind Home Assistant's internal Docker network.
+host_network: true
+
+# The "Open Web UI" button. Ingress (the Home Assistant sidebar) cannot work with this version: the
+# app uses absolute /api, /icons and /manifest.webmanifest URLs with no base-path support, and its
+# Content-Security-Policy forbids being framed.
+#
+# No `ports` or `ports_description` on purpose. Under host networking the Supervisor publishes no
+# ports (supervisor/docker/app.py returns None for host_network), so a `ports` entry would only add
+# an editable Network field that moves nothing: the app keeps listening on 4000 while the button
+# follows the edited number (supervisor/apps/app.py `webui`), and a cleared field gives a broken
+# link. Without `ports`, [PORT:4000] always resolves to 4000.
+webui: "http://[HOST]:[PORT:4000]/"
+
+# No `watchdog` URL either. The image has its own Docker HEALTHCHECK on the same endpoint
+# (GET /api/health every 30 s, 120 s start period, 3 retries), and the Supervisor's watchdog
+# (off until the user turns it on, on the Info tab) is expected to restart an unhealthy container.
+# The app linter rejects a `watchdog` URL as obsolete for exactly that reason.
+
+# Extra environment for the container. The Supervisor also sets TZ to Home Assistant's timezone.
+# Values must be strings (the Supervisor's schema is {name: str}).
+environment:
+  # The Supervisor mounts this app's private storage at /data (and writes
+  # /data/options.json before every start). The image's own default is /app/data, which here would
+  # be an anonymous volume that the Supervisor deletes with the container.
+  DATA_DIR: /data
+
+# With CLIPS_DIR unset, Nightlight puts clips, recordings, wake clips, timelapses and its rolling
+# buffer under /data/clips. Mapping /media would expose them to every signed-in Home Assistant
+# user through the media browser and to other apps mapping media, outside Nightlight's sign-in.
+# Supervisor matches backup_exclude against the full path with PurePath.match; securetar skips a
+# matched directory and all its descendants. The single `clips` pattern matches /data/clips,
+# preserving the database, secrets and snapshots elsewhere under /data. A restore replaces /data,
+# so recordings are NOT restored. This privacy-first trade-off is explained in DOCS.md.
+backup_exclude:
+  - clips
+
+# Cold: the Supervisor stops Nightlight, archives /data, then starts it again. /data holds the SQLite
+# database (in WAL mode) and its secrets, and a copy taken while the app writes is not consistent.
+# A hot backup with backup_pre was considered and rejected: a restore would then need the app's own
+# snapshot swapped in by hand. The pause this causes is documented in DOCS.md.
+backup: cold

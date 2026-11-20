@@ -1,0 +1,6 @@
+# Editor and OS clutter. The repository holds configuration and docs only: nothing is built here.
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
